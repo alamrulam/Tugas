@@ -52,7 +52,7 @@ class _AddListPageState extends State<AddListPage> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(border: OutlineInputBorder()),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text("title"),
               TextFormField(
                 controller: titleController,
