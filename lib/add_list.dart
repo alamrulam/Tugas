@@ -81,6 +81,7 @@ class _AddUserPageState extends State<AddUserPage> {
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),
+<<<<<<< HEAD
             ),
             SizedBox(height: 16),
             Text('Job'),
@@ -88,6 +89,14 @@ class _AddUserPageState extends State<AddUserPage> {
               controller: jobController,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
+=======
+              const SizedBox(height: 10),
+              Text("title"),
+              TextFormField(
+                controller: titleController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(border: OutlineInputBorder()),
+>>>>>>> f217a21ef8b49341c8e2f520261b97d07d8fb642
               ),
             ),
             SizedBox(height: 16),
