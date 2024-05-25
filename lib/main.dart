@@ -1,28 +1,11 @@
-import 'dart:convert';
+// lib/main.dart
 
+import 'dart:convert';
 import 'package:api/add_list.dart';
+import 'package:api/modela.dart';
+import 'package:api/user_detail.dart'; // Import halaman detail
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-class Post {
-  Post({
-    required this.userId,
-    required this.title,
-    required this.body,
-  });
-
-  final int userId;
-  final String title;
-  final String body;
-
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(
-      userId: json['userId'],
-      title: json['title'],
-      body: json['body'],
-    );
-  }
-}
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: HomePage(),
+      home: const HomePage(),
     );
   }
 }
@@ -52,78 +35,74 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<List<Post>> feachDataAPI() async {
-    var api = "https://jsonplaceholder.typicode.com/posts";
-    final respone = await http.get(Uri.parse(api));
+  late Future<UserResponse> futureUsers;
 
-    if (respone.statusCode == 200) {
-      var data = json.decode(respone.body);
+  Future<UserResponse> fetchUsers() async {
+    var api = "https://reqres.in/api/users?page=2";
+    final response = await http.get(Uri.parse(api));
 
-      return List.generate(data.length, (index) {
-        return Post.fromJson(data[index]);
-      } );
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      return UserResponse.fromJson(data);
     } else {
-      throw Exception("Error");
+      throw Exception("Failed to load users");
     }
   }
 
   @override
   void initState() {
-    feachDataAPI();
     super.initState();
+    futureUsers = fetchUsers();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<Post>>(
-        future: feachDataAPI(),
+      appBar: AppBar(title: const Text("User List")),
+      body: FutureBuilder<UserResponse>(
+        future: futureUsers,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
           } else if (snapshot.hasData) {
-            final data = snapshot.data;
-
             return ListView.builder(
-              itemCount: data!.length,
+              itemCount: snapshot.data!.data.length,
               itemBuilder: (context, index) {
-                var item = data[index];
-
+                var user = snapshot.data!.data[index];
                 return Card(
                   child: ListTile(
-                    leading: Text("${item.userId}"),
-                    title: Text(item.title),
-                    subtitle: Text(item.title),
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(user.avatar),
+                    ),
+                    title: Text("${user.firstName} ${user.lastName}"),
+                    subtitle: Text(user.email),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UserDetailPage(userId: user.id),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             );
-            // return Center(
-            //   child: Card(
-            //     child: ListTile(
-            //       leading: Text("${item.userId}"),
-            //       title: Text(snapshot.data!.title),
-            //       subtitle: Text(snapshot.data!.title),
-            //     ),
-            //   ),
-            // );
-          } else if (snapshot.hasError) {
-            return Center(child: Text("${snapshot.error}"));
           } else {
-            return Text("");
+            return const Center(child: Text("No data found"));
           }
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
-            context,MaterialPageRoute(builder: (context) => AddListPage(),
-            ),
+            context,
+            MaterialPageRoute(builder: (context) => const AddUserPage()),
           );
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

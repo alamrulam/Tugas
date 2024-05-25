@@ -1,86 +1,105 @@
-// ignore_for_file: unused_import
-
 import 'dart:convert';
-
+// ignore: unused_import
 import 'package:api/modela.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-class AddListPage extends StatefulWidget {
-  const AddListPage({super.key});
+class AddUserPage extends StatefulWidget {
+  const AddUserPage({Key? key}) : super(key: key);
 
   @override
-  State<AddListPage> createState() => _AddListPageState();
+  _AddUserPageState createState() => _AddUserPageState();
 }
 
-class _AddListPageState extends State<AddListPage> {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController bodyController = TextEditingController();
-  TextEditingController idController = TextEditingController();
+class _AddUserPageState extends State<AddUserPage> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController jobController = TextEditingController();
 
-  Future<void> addList(int id, String title, String body) async {
-    var api = "https://jsonplaceholder.typicode.com/posts";
+  Future<void> addUser(String name, String job) async {
+    var apiUrl = Uri.parse('https://reqres.in/api/users');
+    
+    var response = await http.post(
+      apiUrl,
+      body: json.encode({
+        'name': name,
+        'job': job,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
 
-    final response = await http.post(Uri.parse(api),
-        body: json.encode(
-          {
-            "title": title,
-            "body": body,
-            "userid": id,
-          },
+    if (response.statusCode == 201) {
+      var responseData = json.decode(response.body);
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text('Success'),
+          content: Text('User added successfully with ID: ${responseData['id']}'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         ),
-        headers: {"Content-type": 'application/json; charset=Utf-8'});
-
-    if (response.statusCode >= 200) {
-      print(response.body);
+      );
     } else {
-      print("Error");
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Failed to add user. Please try again later.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(),
-        body: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Text("id"),
-              TextFormField(
-                controller: idController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+      appBar: AppBar(
+        title: Text('Add User'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Name'),
+            TextFormField(
+              controller: nameController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
               ),
-              SizedBox(height: 10),
-              Text("title"),
-              TextFormField(
-                controller: titleController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+            ),
+            SizedBox(height: 16),
+            Text('Job'),
+            TextFormField(
+              controller: jobController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
               ),
-              SizedBox(height: 30),
-              Text("body"),
-              TextFormField(
-                controller: bodyController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(border: OutlineInputBorder()),
-              ),
-              SizedBox(height: 30),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    addList(
-                      int.parse(idController.text),
-                      titleController.text,
-                      bodyController.text,
-                    );
-                  },
-                  child: Text("Add"),
-                ),
-              )
-            ],
-          ),
-        ));
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                addUser(nameController.text, jobController.text);
+              },
+              child: Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
